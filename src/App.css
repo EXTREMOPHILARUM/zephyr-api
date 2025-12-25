@@ -361,6 +361,89 @@ summary:hover {
   line-height: 1.5;
 }
 
+.body-mode-toggle {
+  display: flex;
+  gap: 0;
+  margin-bottom: 15px;
+  background-color: #e5e7eb;
+  border-radius: 8px;
+  padding: 4px;
+  width: fit-content;
+}
+
+.body-mode-toggle button {
+  padding: 0.5em 1.2em;
+  border-radius: 6px;
+  background-color: transparent;
+  color: #666;
+  box-shadow: none;
+  border: none;
+  transition: all 0.2s;
+}
+
+.body-mode-toggle button.active {
+  background-color: #ffffff;
+  color: #0f0f0f;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.body-mode-toggle button:hover {
+  color: #0f0f0f;
+}
+
+.raw-json-editor {
+  padding: 10px 0;
+}
+
+.json-textarea {
+  width: 100%;
+  min-height: 200px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  line-height: 1.5;
+  padding: 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  resize: vertical;
+  background-color: #ffffff;
+  color: #0f0f0f;
+}
+
+.json-textarea:focus {
+  outline: none;
+  border-color: #646cff;
+}
+
+.json-error {
+  color: #ef4444;
+  background-color: #fee2e2;
+  padding: 10px;
+  border-radius: 6px;
+  margin-top: 10px;
+  font-size: 0.9em;
+  border-left: 3px solid #ef4444;
+}
+
+.format-btn {
+  margin-top: 10px;
+  background-color: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5em 1em;
+  font-size: 0.9em;
+  cursor: pointer;
+}
+
+.format-btn:hover {
+  background-color: #059669;
+}
+
+.format-btn:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     color: #f6f6f6;
@@ -455,5 +538,37 @@ summary:hover {
 
   .body-preview {
     background-color: #0a0a0a;
+  }
+
+  .body-mode-toggle {
+    background-color: #1a1a1a;
+  }
+
+  .body-mode-toggle button {
+    color: #888;
+  }
+
+  .body-mode-toggle button.active {
+    background-color: #0f0f0f;
+    color: #f6f6f6;
+  }
+
+  .body-mode-toggle button:hover {
+    color: #f6f6f6;
+  }
+
+  .json-textarea {
+    background-color: #0f0f0f;
+    color: #f6f6f6;
+    border-color: #333;
+  }
+
+  .json-textarea:focus {
+    border-color: #24c8db;
+  }
+
+  .json-error {
+    background-color: #3f1515;
+    border-left-color: #ef4444;
   }
 }

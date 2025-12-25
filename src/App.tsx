@@ -33,6 +33,9 @@ function App() {
   const [bodyParams, setBodyParams] = useState<KeyValuePair[]>([
     { key: "", value: "" },
   ]);
+  const [bodyMode, setBodyMode] = useState<"form" | "raw">("form");
+  const [rawJsonBody, setRawJsonBody] = useState<string>("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
   const [response, setResponse] = useState<ApiResponse | null>(null);
   const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -105,20 +108,36 @@ function App() {
           return acc;
         }, {} as Record<string, string>);
 
-      // Convert body params to JSON object (only for POST/PUT)
+      // Convert body params to JSON object (only for POST/PUT/PATCH)
       let body = null;
       if (method === "POST" || method === "PUT" || method === "PATCH") {
-        const validBodyParams = bodyParams.filter((p) => p.key.trim() !== "");
-        if (validBodyParams.length > 0) {
-          body = validBodyParams.reduce((acc, p) => {
-            // Try to parse value as JSON, otherwise use as string
+        if (bodyMode === "raw") {
+          // Use raw JSON mode
+          if (rawJsonBody.trim()) {
             try {
-              acc[p.key] = JSON.parse(p.value);
-            } catch {
-              acc[p.key] = p.value;
+              body = JSON.parse(rawJsonBody);
+              setJsonError(null);
+            } catch (e) {
+              setJsonError("Invalid JSON: " + (e as Error).message);
+              setError("Invalid JSON in request body");
+              setLoading(false);
+              return;
             }
-            return acc;
-          }, {} as Record<string, any>);
+          }
+        } else {
+          // Use form mode
+          const validBodyParams = bodyParams.filter((p) => p.key.trim() !== "");
+          if (validBodyParams.length > 0) {
+            body = validBodyParams.reduce((acc, p) => {
+              // Try to parse value as JSON, otherwise use as string
+              try {
+                acc[p.key] = JSON.parse(p.value);
+              } catch {
+                acc[p.key] = p.value;
+              }
+              return acc;
+            }, {} as Record<string, any>);
+          }
         }
       }
 
@@ -266,42 +285,96 @@ function App() {
           {(method === "POST" || method === "PUT" || method === "PATCH") && (
             <details>
               <summary>Request Body</summary>
-              <div className="key-value-list">
-                {bodyParams.map((param, index) => (
-                  <div key={index} className="key-value-row">
-                    <input
-                      type="text"
-                      placeholder="Key"
-                      value={param.key}
-                      onChange={(e) => updateBodyParam(index, "key", e.target.value)}
-                      disabled={loading}
-                    />
-                    <input
-                      type="text"
-                      placeholder="Value (can be JSON)"
-                      value={param.value}
-                      onChange={(e) => updateBodyParam(index, "value", e.target.value)}
-                      disabled={loading}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeBodyParam(index)}
-                      disabled={loading}
-                      className="remove-btn"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                ))}
+
+              <div className="body-mode-toggle">
                 <button
                   type="button"
-                  onClick={addBodyParam}
+                  className={bodyMode === "form" ? "active" : ""}
+                  onClick={() => setBodyMode("form")}
                   disabled={loading}
-                  className="add-btn"
                 >
-                  + Add Field
+                  Form
+                </button>
+                <button
+                  type="button"
+                  className={bodyMode === "raw" ? "active" : ""}
+                  onClick={() => setBodyMode("raw")}
+                  disabled={loading}
+                >
+                  Raw JSON
                 </button>
               </div>
+
+              {bodyMode === "form" ? (
+                <div className="key-value-list">
+                  {bodyParams.map((param, index) => (
+                    <div key={index} className="key-value-row">
+                      <input
+                        type="text"
+                        placeholder="Key"
+                        value={param.key}
+                        onChange={(e) => updateBodyParam(index, "key", e.target.value)}
+                        disabled={loading}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Value (can be JSON)"
+                        value={param.value}
+                        onChange={(e) => updateBodyParam(index, "value", e.target.value)}
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeBodyParam(index)}
+                        disabled={loading}
+                        className="remove-btn"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={addBodyParam}
+                    disabled={loading}
+                    className="add-btn"
+                  >
+                    + Add Field
+                  </button>
+                </div>
+              ) : (
+                <div className="raw-json-editor">
+                  <textarea
+                    className="json-textarea"
+                    value={rawJsonBody}
+                    onChange={(e) => {
+                      setRawJsonBody(e.target.value);
+                      // Clear error when user starts typing
+                      if (jsonError) setJsonError(null);
+                    }}
+                    placeholder='{\n  "key": "value",\n  "nested": {\n    "example": true\n  }\n}'
+                    disabled={loading}
+                    spellCheck={false}
+                  />
+                  {jsonError && <div className="json-error">{jsonError}</div>}
+                  <button
+                    type="button"
+                    className="format-btn"
+                    onClick={() => {
+                      try {
+                        const parsed = JSON.parse(rawJsonBody);
+                        setRawJsonBody(JSON.stringify(parsed, null, 2));
+                        setJsonError(null);
+                      } catch (e) {
+                        setJsonError("Invalid JSON: " + (e as Error).message);
+                      }
+                    }}
+                    disabled={loading || !rawJsonBody.trim()}
+                  >
+                    Format JSON
+                  </button>
+                </div>
+              )}
             </details>
           )}
         </div>
