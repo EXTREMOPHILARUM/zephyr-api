@@ -35,6 +35,7 @@
       "minSdkVersion": 24
     },
     "iOS": {
+      "developmentTeam": "68HQ622QG5",
       "minimumSystemVersion": "13.0"
     }
   }
