@@ -107,7 +107,7 @@ function App() {
 
       // Convert body params to JSON object (only for POST/PUT)
       let body = null;
-      if (method === "POST" || method === "PUT") {
+      if (method === "POST" || method === "PUT" || method === "PATCH") {
         const validBodyParams = bodyParams.filter((p) => p.key.trim() !== "");
         if (validBodyParams.length > 0) {
           body = validBodyParams.reduce((acc, p) => {
@@ -164,7 +164,10 @@ function App() {
             <option value="GET">GET</option>
             <option value="POST">POST</option>
             <option value="PUT">PUT</option>
+            <option value="PATCH">PATCH</option>
             <option value="DELETE">DELETE</option>
+            <option value="HEAD">HEAD</option>
+            <option value="OPTIONS">OPTIONS</option>
           </select>
           <input
             type="text"
@@ -260,7 +263,7 @@ function App() {
             </div>
           </details>
 
-          {(method === "POST" || method === "PUT") && (
+          {(method === "POST" || method === "PUT" || method === "PATCH") && (
             <details>
               <summary>Request Body</summary>
               <div className="key-value-list">

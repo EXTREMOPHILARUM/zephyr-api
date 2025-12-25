@@ -35,7 +35,7 @@ async fn fetch_json(
 
     // Validate method
     let method = method.to_uppercase();
-    if !["GET", "POST", "PUT", "DELETE"].contains(&method.as_str()) {
+    if !["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"].contains(&method.as_str()) {
         return Err(format!("Unsupported HTTP method: {}", method));
     }
 
@@ -70,6 +70,9 @@ async fn fetch_json(
         "POST" => client.post(&full_url),
         "PUT" => client.put(&full_url),
         "DELETE" => client.delete(&full_url),
+        "PATCH" => client.patch(&full_url),
+        "HEAD" => client.head(&full_url),
+        "OPTIONS" => client.request(reqwest::Method::OPTIONS, &full_url),
         _ => return Err(format!("Unsupported method: {}", method)),
     };
 
@@ -80,8 +83,8 @@ async fn fetch_json(
         }
     }
 
-    // Add request body for POST/PUT
-    if method == "POST" || method == "PUT" {
+    // Add request body for POST/PUT/PATCH
+    if method == "POST" || method == "PUT" || method == "PATCH" {
         if let Some(body_data) = body {
             request = request.json(&body_data);
         }
