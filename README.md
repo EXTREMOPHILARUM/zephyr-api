@@ -4,6 +4,8 @@
 
 A powerful, cross-platform desktop application for testing and exploring REST APIs, built with Tauri, React, and TypeScript. Think Postman/Insomnia, but as a lightweight native desktop app.
 
+![Zephyr API Screenshot](docs/app.png)
+
 ## ✨ Features
 
 ### 🚀 HTTP Methods
