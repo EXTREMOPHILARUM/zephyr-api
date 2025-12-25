@@ -1,0 +1,46 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#3b82f6"/>
+
+  <!-- Wind flow lines - creating a "Z" shape with flowing curves -->
+  <path d="M 140 180 Q 200 170 280 180 L 340 180"
+        stroke="white"
+        stroke-width="20"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.9"/>
+
+  <path d="M 340 180 L 180 320"
+        stroke="white"
+        stroke-width="20"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.9"/>
+
+  <path d="M 180 320 Q 240 310 320 320 L 380 320"
+        stroke="white"
+        stroke-width="20"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.9"/>
+
+  <!-- Accent flow lines for wind effect -->
+  <path d="M 160 210 Q 200 205 260 210"
+        stroke="white"
+        stroke-width="12"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.5"/>
+
+  <path d="M 250 285 Q 290 280 340 285"
+        stroke="white"
+        stroke-width="12"
+        stroke-linecap="round"
+        fill="none"
+        opacity="0.5"/>
+
+  <!-- Small decorative dots for API/data theme -->
+  <circle cx="360" cy="180" r="8" fill="white" opacity="0.8"/>
+  <circle cx="400" cy="320" r="8" fill="white" opacity="0.8"/>
+  <circle cx="380" cy="250" r="6" fill="white" opacity="0.6"/>
+</svg>
