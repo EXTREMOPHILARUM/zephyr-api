@@ -393,6 +393,8 @@ summary:hover {
 
 .raw-json-editor {
   padding: 10px 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .json-textarea {
@@ -407,6 +409,7 @@ summary:hover {
   resize: vertical;
   background-color: #ffffff;
   color: #0f0f0f;
+  box-sizing: border-box;
 }
 
 .json-textarea:focus {
