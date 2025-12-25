@@ -68,6 +68,45 @@ cargo test                 # Run tests
 cargo clippy               # Lint Rust code
 ```
 
+### Mobile Development (Android & iOS)
+
+**Prerequisites:**
+- **Android:** Android Studio with command line tools, Android SDK (API 24+), Java Development Kit
+- **iOS:** Xcode 13+, CocoaPods, iOS 13.0+ deployment target
+
+**Initial Setup:**
+```bash
+# Install CocoaPods (iOS - requires sudo)
+sudo gem install cocoapods
+
+# Install Android command line tools through Android Studio
+# Settings → Appearance & Behavior → System Settings → Android SDK → SDK Tools
+
+# Initialize mobile projects (run once)
+npm run android:init        # Generate Android project in src-tauri/gen/android
+npm run ios:init            # Generate iOS project in src-tauri/gen/ios
+```
+
+**Development:**
+```bash
+npm run android:dev         # Run on Android emulator/device with hot reload
+npm run ios:dev             # Run on iOS simulator/device with hot reload
+```
+
+**Building:**
+```bash
+npm run android:build       # Build Android APK/AAB
+npm run ios:build           # Build iOS app bundle
+```
+
+**Mobile-Specific Notes:**
+- Mobile features are enabled in `Cargo.toml` with `tauri = { version = "2", features = ["mobile"] }`
+- Android requires `INTERNET` and `ACCESS_NETWORK_STATE` permissions (configured in tauri.conf.json)
+- iOS requires minimum system version 13.0 (configured in tauri.conf.json)
+- UI is responsive with mobile breakpoints at 768px (see App.css mobile media query)
+- Touch targets are minimum 44px for accessibility
+- CORS-free requests work on mobile (major advantage over browser-based tools)
+
 ## Key Implementation Details
 
 ### HTTP Request Flow

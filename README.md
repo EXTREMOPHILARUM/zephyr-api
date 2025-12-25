@@ -2,7 +2,7 @@
 
 > A breath of fresh air for API testing
 
-A powerful, cross-platform desktop application for testing and exploring REST APIs, built with Tauri, React, and TypeScript. Think Postman/Insomnia, but as a lightweight native desktop app.
+A powerful, cross-platform application for testing and exploring REST APIs, built with Tauri, React, and TypeScript. Works on desktop (macOS, Windows, Linux) and mobile (Android, iOS). Think Postman/Insomnia, but as a lightweight native app.
 
 ![Zephyr API Screenshot](docs/app.png)
 
@@ -35,10 +35,11 @@ A powerful, cross-platform desktop application for testing and exploring REST AP
 - **Responsive Design** - Works on various screen sizes
 
 ### 🔒 Benefits of Tauri Backend
-- **CORS-Free** - Bypass browser CORS restrictions by making requests from Rust
+- **CORS-Free** - Bypass browser CORS restrictions by making requests from Rust (works on mobile too!)
 - **Native Performance** - Fast HTTP requests with Rust's `reqwest` crate
-- **Cross-Platform** - Works on macOS, Windows, and Linux
+- **Cross-Platform** - Works on macOS, Windows, Linux, Android, and iOS
 - **Small Bundle Size** - Lighter than Electron alternatives
+- **Mobile-Ready** - Test APIs on the go with full feature parity on mobile devices
 
 ## 🛠️ Technology Stack
 
@@ -88,6 +89,35 @@ A powerful, cross-platform desktop application for testing and exploring REST AP
    npm run tauri build
    ```
    The compiled app will be in `src-tauri/target/release/bundle/`
+
+### Mobile Development (Optional)
+
+To run Zephyr API on Android or iOS devices:
+
+**Additional Prerequisites:**
+- **Android**: Android Studio with command line tools, Android SDK (API 24+), Java Development Kit
+- **iOS**: Xcode 13+, CocoaPods (`sudo gem install cocoapods`)
+
+**Setup:**
+```bash
+# Initialize mobile projects (run once)
+npm run android:init    # Generates Android project
+npm run ios:init        # Generates iOS project
+```
+
+**Development:**
+```bash
+npm run android:dev     # Run on Android emulator/device
+npm run ios:dev         # Run on iOS simulator/device
+```
+
+**Building:**
+```bash
+npm run android:build   # Build Android APK
+npm run ios:build       # Build iOS app
+```
+
+**Note:** Mobile builds require completing the manual setup steps for Android command line tools and CocoaPods. See [CLAUDE.md](CLAUDE.md) for detailed mobile setup instructions.
 
 ## 🎯 Usage Examples
 
