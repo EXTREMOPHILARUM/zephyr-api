@@ -23,6 +23,9 @@ jobs:
             args: ''
           - platform: 'windows-latest'
             args: ''
+          - platform: 'ubuntu-22.04'
+            args: '--target aarch64-linux-android'
+            target: 'aarch64-linux-android'
 
     runs-on: ${{ matrix.platform }}
 
@@ -36,10 +39,21 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Setup Java (Android only)
+        if: matrix.target == 'aarch64-linux-android'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK (Android only)
+        if: matrix.target == 'aarch64-linux-android'
+        uses: android-actions/setup-android@v3
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || matrix.target == 'aarch64-linux-android' && 'aarch64-linux-android' || '' }}
 
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
@@ -84,11 +98,18 @@ jobs:
 
             ## Downloads
 
+            - **Android**: Download the `.apk` file for ARM64 devices
             - **macOS**: Download the `.dmg` file for your architecture (Apple Silicon or Intel)
             - **Windows**: Download the `.msi` or `.exe` installer
             - **Linux**: Download the `.AppImage` (no installation required) or `.deb` package
 
             ## Installation
+
+            ### Android
+            1. Download the `.apk` file
+            2. Enable "Install from Unknown Sources" in Settings → Security
+            3. Open the `.apk` file and tap Install
+            4. Launch Zephyr API from your app drawer
 
             ### macOS
             1. Download the appropriate `.dmg` file
