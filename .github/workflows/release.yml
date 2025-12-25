@@ -1,0 +1,120 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: 'macos-latest'
+            args: '--target universal-apple-darwin'
+          - platform: 'ubuntu-22.04'
+            args: ''
+          - platform: 'windows-latest'
+            args: ''
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Install dependencies (Ubuntu only)
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Cache Rust dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Zephyr API ${{ github.ref_name }}'
+          releaseBody: |
+            ## What's New
+
+            See the [CHANGELOG](https://github.com/EXTREMOPHILARUM/zephyr-api/blob/main/CHANGELOG.md) for details.
+
+            ## Downloads
+
+            - **macOS**: Download the `.dmg` file for your architecture (Apple Silicon or Intel)
+            - **Windows**: Download the `.msi` or `.exe` installer
+            - **Linux**: Download the `.AppImage` (no installation required) or `.deb` package
+
+            ## Installation
+
+            ### macOS
+            1. Download the appropriate `.dmg` file
+            2. Open the `.dmg` and drag Zephyr API to Applications
+            3. Launch from Applications (first time may require right-click → Open)
+
+            ### Windows
+            1. Download the `.msi` or `.exe` installer
+            2. Run the installer
+            3. Launch Zephyr API from Start Menu
+
+            ### Linux
+            #### AppImage (Recommended)
+            1. Download the `.AppImage` file
+            2. Make it executable: `chmod +x zephyr-api_*.AppImage`
+            3. Run: `./zephyr-api_*.AppImage`
+
+            #### Debian/Ubuntu
+            1. Download the `.deb` package
+            2. Install: `sudo dpkg -i zephyr-api_*.deb`
+            3. Run: `zephyr-api`
+
+            ---
+
+            **Note**: This is a draft release. Maintainers will review and publish when ready.
+          releaseDraft: true
+          prerelease: false
+          includeUpdaterJson: true
+          args: ${{ matrix.args }}
