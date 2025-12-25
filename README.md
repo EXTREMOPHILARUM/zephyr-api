@@ -96,13 +96,25 @@ To run Zephyr API on Android or iOS devices:
 
 **Additional Prerequisites:**
 - **Android**: Android Studio with command line tools, Android SDK (API 24+), Java Development Kit
-- **iOS**: Xcode 13+, CocoaPods (`sudo gem install cocoapods`)
+- **iOS**: Xcode 13+, Ruby 3.1+ (via Homebrew), CocoaPods
+
+**iOS Setup:**
+```bash
+# macOS system Ruby is too old (2.6), install modern Ruby via Homebrew
+brew install ruby
+
+# Add Ruby and gem binaries to PATH (add to ~/.zshrc for persistence)
+export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH"
+
+# Install CocoaPods
+gem install cocoapods
+```
 
 **Setup:**
 ```bash
 # Initialize mobile projects (run once)
 npm run android:init    # Generates Android project
-npm run ios:init        # Generates iOS project
+npm run ios:init        # Generates iOS project (requires CocoaPods setup above)
 ```
 
 **Development:**
@@ -117,7 +129,12 @@ npm run android:build   # Build Android APK
 npm run ios:build       # Build iOS app
 ```
 
-**Note:** Mobile builds require completing the manual setup steps for Android command line tools and CocoaPods. See [CLAUDE.md](CLAUDE.md) for detailed mobile setup instructions.
+**Note:** Mobile builds require completing the manual setup steps:
+- **Android**: Android Studio with SDK/NDK command line tools
+- **iOS**: Ruby 3.1+ (via Homebrew) and CocoaPods installation (see iOS Setup above)
+- **iOS Code Signing**: For device builds, configure Apple Developer Team ID
+
+See [CLAUDE.md](CLAUDE.md) for detailed mobile setup instructions.
 
 ## 🎯 Usage Examples
 

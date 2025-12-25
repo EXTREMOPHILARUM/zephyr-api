@@ -72,19 +72,25 @@ cargo clippy               # Lint Rust code
 
 **Prerequisites:**
 - **Android:** Android Studio with command line tools, Android SDK (API 24+), Java Development Kit
-- **iOS:** Xcode 13+, CocoaPods, iOS 13.0+ deployment target
+- **iOS:** Xcode 13+, Ruby 3.1+, CocoaPods, iOS 13.0+ deployment target
 
 **Initial Setup:**
 ```bash
-# Install CocoaPods (iOS - requires sudo)
-sudo gem install cocoapods
+# iOS: Install Ruby via Homebrew (macOS system Ruby is too old)
+brew install ruby
+
+# iOS: Add Ruby and gem binaries to PATH (add to ~/.zshrc for persistence)
+export PATH="/opt/homebrew/opt/ruby/bin:/opt/homebrew/lib/ruby/gems/3.4.0/bin:$PATH"
+
+# iOS: Install CocoaPods
+gem install cocoapods
 
 # Install Android command line tools through Android Studio
 # Settings → Appearance & Behavior → System Settings → Android SDK → SDK Tools
 
 # Initialize mobile projects (run once)
 npm run android:init        # Generate Android project in src-tauri/gen/android
-npm run ios:init            # Generate iOS project in src-tauri/gen/ios
+npm run ios:init            # Generate iOS project in src-tauri/gen/apple
 ```
 
 **Development:**
@@ -100,12 +106,15 @@ npm run ios:build           # Build iOS app bundle
 ```
 
 **Mobile-Specific Notes:**
-- Mobile features are enabled in `Cargo.toml` with `tauri = { version = "2", features = ["mobile"] }`
-- Android requires `INTERNET` and `ACCESS_NETWORK_STATE` permissions (configured in tauri.conf.json)
-- iOS requires minimum system version 13.0 (configured in tauri.conf.json)
+- Tauri v2 has built-in mobile support (no feature flags needed in Cargo.toml)
+- Android configuration in `tauri.conf.json`: minSdkVersion 24
+- iOS configuration in `tauri.conf.json`: minimumSystemVersion 13.0
+- Code signing: iOS builds require an Apple Developer Team ID (set `bundle.iOS.developmentTeam` or `APPLE_DEVELOPMENT_TEAM` env var)
+- Generated projects: Android at `src-tauri/gen/android`, iOS at `src-tauri/gen/apple`
 - UI is responsive with mobile breakpoints at 768px (see App.css mobile media query)
-- Touch targets are minimum 44px for accessibility
+- Touch targets are minimum 48px for accessibility
 - CORS-free requests work on mobile (major advantage over browser-based tools)
+- Uses rustls-tls instead of OpenSSL for easier cross-compilation to mobile targets
 
 ## Key Implementation Details
 
