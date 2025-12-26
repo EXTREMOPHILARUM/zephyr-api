@@ -172,7 +172,7 @@ jobs:
         run: npm run android:init || echo "Android project may already be initialized"
 
       - name: Build Android APK
-        run: npm run android:build -- --apk
+        run: npm run android:build -- --apk true
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v1
