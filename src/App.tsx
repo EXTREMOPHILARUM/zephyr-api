@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import JsonView from "@uiw/react-json-view";
 import { darkTheme } from "@uiw/react-json-view/dark";
 import "./App.css";
 
+type ThemeMode = "auto" | "light" | "dark";
 type KeyValuePair = { key: string; value: string };
 
 type ApiResponse = {
@@ -40,6 +41,51 @@ function App() {
   const [requestDetails, setRequestDetails] = useState<RequestDetails | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [themeMode, setThemeMode] = useState<ThemeMode>("auto");
+  const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  );
+
+  // Load theme preference from localStorage on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme-mode") as ThemeMode | null;
+    if (savedTheme && ["auto", "light", "dark"].includes(savedTheme)) {
+      setThemeMode(savedTheme);
+    }
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSystemPrefersDark(e.matches);
+    };
+
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  // Determine actual dark mode based on theme preference
+  const isDarkMode =
+    themeMode === "dark" ? true :
+    themeMode === "light" ? false :
+    systemPrefersDark; // auto mode
+
+  // Apply theme to document
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  }, [isDarkMode]);
+
+  // Toggle theme mode
+  const cycleTheme = () => {
+    const modes: ThemeMode[] = ["auto", "light", "dark"];
+    const currentIndex = modes.indexOf(themeMode);
+    const nextMode = modes[(currentIndex + 1) % modes.length];
+    setThemeMode(nextMode);
+    localStorage.setItem("theme-mode", nextMode);
+  };
 
   const addQueryParam = () => {
     setQueryParams([...queryParams, { key: "", value: "" }]);
@@ -165,12 +211,23 @@ function App() {
     }
   }
 
-  const isDarkMode = window.matchMedia("(prefers-color-scheme: dark)").matches;
-
   return (
     <main className="container">
-      <h1>Zephyr API</h1>
-      <p className="subtitle">A breath of fresh air for API testing</p>
+      <div className="header">
+        <div className="header-content">
+          <h1>Zephyr API</h1>
+          <p className="subtitle">A breath of fresh air for API testing</p>
+        </div>
+        <button
+          className="theme-toggle"
+          onClick={cycleTheme}
+          title={`Theme: ${themeMode} (click to cycle)`}
+          aria-label="Toggle theme"
+        >
+          {themeMode === "auto" ? "🌓" : themeMode === "dark" ? "🌙" : "☀️"}
+          <span className="theme-label">{themeMode}</span>
+        </button>
+      </div>
 
       <div className="request-builder">
         <div className="method-url-row">
