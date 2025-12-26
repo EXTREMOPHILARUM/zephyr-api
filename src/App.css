@@ -201,6 +201,7 @@ button:disabled {
   padding: 15px;
   margin-top: 15px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 details {
@@ -302,6 +303,7 @@ summary:hover {
   border-radius: 8px;
   padding: 15px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 .response-summary {
@@ -860,7 +862,7 @@ summary:hover {
   }
 
   .response-section {
-    width: 100%;
+    width: calc(100% - 20px);
     max-width: 100%;
     margin: 10px;
     padding: 12px;
