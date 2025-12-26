@@ -1,5 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import JsonView from "@uiw/react-json-view";
 import { darkTheme } from "@uiw/react-json-view/dark";
 import "./App.css";
@@ -47,6 +49,25 @@ function App() {
   );
   const [requestActiveTab, setRequestActiveTab] = useState<string>("query");
   const [responseActiveTab, setResponseActiveTab] = useState<string>("body");
+  const [showDownloadMenu, setShowDownloadMenu] = useState<boolean>(false);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close download menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (downloadMenuRef.current && !downloadMenuRef.current.contains(event.target as Node)) {
+        setShowDownloadMenu(false);
+      }
+    };
+
+    if (showDownloadMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showDownloadMenu]);
 
   // Load theme preference from localStorage on mount
   useEffect(() => {
@@ -168,6 +189,95 @@ function App() {
     const updated = [...bodyParams];
     updated[index][field] = value;
     setBodyParams(updated);
+  };
+
+  // Generate filename from URL and timestamp
+  const generateFilename = (extension: string): string => {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    let urlPart = "response";
+
+    if (apiUrl) {
+      try {
+        const url = new URL(apiUrl);
+        urlPart = url.hostname.replace(/\./g, "-") + url.pathname.replace(/\//g, "-");
+        urlPart = urlPart.replace(/[^a-zA-Z0-9-]/g, "").substring(0, 50);
+      } catch {
+        urlPart = apiUrl.substring(0, 30).replace(/[^a-zA-Z0-9-]/g, "-");
+      }
+    }
+
+    return `${urlPart}-${timestamp}.${extension}`;
+  };
+
+  // Download response as JSON
+  const downloadAsJson = async (includeHeaders: boolean = false) => {
+    if (!response) return;
+
+    const data = includeHeaders ? {
+      statusCode: response.status_code,
+      headers: response.headers,
+      body: response.body,
+      durationMs: response.duration_ms
+    } : response.body;
+
+    const json = JSON.stringify(data, null, 2);
+
+    try {
+      const filePath = await save({
+        defaultPath: generateFilename("json"),
+        filters: [{
+          name: "JSON",
+          extensions: ["json"]
+        }]
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, json);
+      }
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      setError("Failed to save file: " + error);
+    }
+
+    setShowDownloadMenu(false);
+  };
+
+  // Download response as text
+  const downloadAsText = async (includeHeaders: boolean = false) => {
+    if (!response) return;
+
+    let content = "";
+
+    if (includeHeaders) {
+      content += `Status: ${response.status_code}\n`;
+      content += `Duration: ${response.duration_ms}ms\n\n`;
+      content += "Headers:\n";
+      Object.entries(response.headers).forEach(([key, value]) => {
+        content += `${key}: ${value}\n`;
+      });
+      content += "\nBody:\n";
+    }
+
+    content += JSON.stringify(response.body, null, 2);
+
+    try {
+      const filePath = await save({
+        defaultPath: generateFilename("txt"),
+        filters: [{
+          name: "Text",
+          extensions: ["txt"]
+        }]
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, content);
+      }
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      setError("Failed to save file: " + error);
+    }
+
+    setShowDownloadMenu(false);
   };
 
   async function fetchJson() {
@@ -602,6 +712,33 @@ function App() {
                 hidden={responseActiveTab !== "body"}
                 className="tab-panel"
               >
+                <div className="response-actions">
+                  <div className="download-container" ref={downloadMenuRef}>
+                    <button
+                      className="download-btn"
+                      onClick={() => setShowDownloadMenu(!showDownloadMenu)}
+                      title="Download response"
+                    >
+                      ⬇ Download
+                    </button>
+                    {showDownloadMenu && (
+                      <div className="download-menu">
+                        <button onClick={() => downloadAsJson(false)}>
+                          JSON (body only)
+                        </button>
+                        <button onClick={() => downloadAsJson(true)}>
+                          JSON (with headers)
+                        </button>
+                        <button onClick={() => downloadAsText(false)}>
+                          Text (body only)
+                        </button>
+                        <button onClick={() => downloadAsText(true)}>
+                          Text (with headers)
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="json-viewer-container">
                   <JsonView
                     value={response.body}

@@ -18,7 +18,17 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": null,
+      "capabilities": [
+        {
+          "identifier": "main",
+          "windows": ["main"],
+          "permissions": [
+            "dialog:allow-save",
+            "fs:allow-write-text-file"
+          ]
+        }
+      ]
     }
   },
   "bundle": {
