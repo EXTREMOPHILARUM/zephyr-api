@@ -862,14 +862,15 @@ summary:hover {
   .response-section {
     width: 100%;
     max-width: 100%;
-    padding: 0 10px;
+    margin: 10px;
+    padding: 12px;
   }
 
   .response-summary {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
-    padding: 12px;
+    padding: 10px;
   }
 
   .status-badge {
@@ -879,10 +880,6 @@ summary:hover {
 
   .timing {
     font-size: 0.9em;
-  }
-
-  .details-tabs {
-    padding: 12px;
   }
 
   .headers-display,
