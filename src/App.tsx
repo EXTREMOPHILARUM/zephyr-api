@@ -45,6 +45,8 @@ function App() {
   const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(
     window.matchMedia("(prefers-color-scheme: dark)").matches
   );
+  const [requestActiveTab, setRequestActiveTab] = useState<string>("query");
+  const [responseActiveTab, setResponseActiveTab] = useState<string>("body");
 
   // Load theme preference from localStorage on mount
   useEffect(() => {
@@ -85,6 +87,45 @@ function App() {
     const nextMode = modes[(currentIndex + 1) % modes.length];
     setThemeMode(nextMode);
     localStorage.setItem("theme-mode", nextMode);
+  };
+
+  // Auto-switch tab when Request Body becomes unavailable
+  useEffect(() => {
+    if (requestActiveTab === "body" &&
+        method !== "POST" && method !== "PUT" && method !== "PATCH") {
+      setRequestActiveTab("query");
+    }
+  }, [method, requestActiveTab]);
+
+  // Keyboard navigation for Request Builder tabs
+  const handleRequestTabKeyDown = (e: React.KeyboardEvent) => {
+    const tabs = ["query", "headers"];
+    if (method === "POST" || method === "PUT" || method === "PATCH") {
+      tabs.push("body");
+    }
+    const currentIndex = tabs.indexOf(requestActiveTab);
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setRequestActiveTab(tabs[(currentIndex + 1) % tabs.length]);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setRequestActiveTab(tabs[(currentIndex - 1 + tabs.length) % tabs.length]);
+    }
+  };
+
+  // Keyboard navigation for Response tabs
+  const handleResponseTabKeyDown = (e: React.KeyboardEvent) => {
+    const tabs = ["body", "headers", "details"];
+    const currentIndex = tabs.indexOf(responseActiveTab);
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      setResponseActiveTab(tabs[(currentIndex + 1) % tabs.length]);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      setResponseActiveTab(tabs[(currentIndex - 1 + tabs.length) % tabs.length]);
+    }
   };
 
   const addQueryParam = () => {
@@ -258,131 +299,79 @@ function App() {
           </button>
         </div>
 
-        <div className="params-section">
-          <details>
-            <summary>Query Parameters</summary>
-            <div className="key-value-list">
-              {queryParams.map((param, index) => (
-                <div key={index} className="key-value-row">
-                  <input
-                    type="text"
-                    placeholder="Key"
-                    value={param.key}
-                    onChange={(e) => updateQueryParam(index, "key", e.target.value)}
-                    disabled={loading}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Value"
-                    value={param.value}
-                    onChange={(e) => updateQueryParam(index, "value", e.target.value)}
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeQueryParam(index)}
-                    disabled={loading}
-                    className="remove-btn"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+        <div className="section-container params-section">
+          <div className="tab-container">
+            <div className="tab-bar" role="tablist" aria-label="Request options" onKeyDown={handleRequestTabKeyDown}>
               <button
-                type="button"
-                onClick={addQueryParam}
+                role="tab"
+                aria-selected={requestActiveTab === "query"}
+                aria-controls="request-query-panel"
+                id="request-query-tab"
+                tabIndex={requestActiveTab === "query" ? 0 : -1}
+                className={`tab-button ${requestActiveTab === "query" ? "active" : ""}`}
+                onClick={() => setRequestActiveTab("query")}
                 disabled={loading}
-                className="add-btn"
               >
-                + Add Parameter
+                Query Parameters
               </button>
-            </div>
-          </details>
 
-          <details>
-            <summary>Headers</summary>
-            <div className="key-value-list">
-              {headers.map((header, index) => (
-                <div key={index} className="key-value-row">
-                  <input
-                    type="text"
-                    placeholder="Key (e.g., Authorization)"
-                    value={header.key}
-                    onChange={(e) => updateHeader(index, "key", e.target.value)}
-                    disabled={loading}
-                  />
-                  <input
-                    type="text"
-                    placeholder="Value"
-                    value={header.value}
-                    onChange={(e) => updateHeader(index, "value", e.target.value)}
-                    disabled={loading}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeHeader(index)}
-                    disabled={loading}
-                    className="remove-btn"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
               <button
-                type="button"
-                onClick={addHeader}
+                role="tab"
+                aria-selected={requestActiveTab === "headers"}
+                aria-controls="request-headers-panel"
+                id="request-headers-tab"
+                tabIndex={requestActiveTab === "headers" ? 0 : -1}
+                className={`tab-button ${requestActiveTab === "headers" ? "active" : ""}`}
+                onClick={() => setRequestActiveTab("headers")}
                 disabled={loading}
-                className="add-btn"
               >
-                + Add Header
+                Headers
               </button>
-            </div>
-          </details>
 
-          {(method === "POST" || method === "PUT" || method === "PATCH") && (
-            <details>
-              <summary>Request Body</summary>
-
-              <div className="body-mode-toggle">
+              {(method === "POST" || method === "PUT" || method === "PATCH") && (
                 <button
-                  type="button"
-                  className={bodyMode === "form" ? "active" : ""}
-                  onClick={() => setBodyMode("form")}
+                  role="tab"
+                  aria-selected={requestActiveTab === "body"}
+                  aria-controls="request-body-panel"
+                  id="request-body-tab"
+                  tabIndex={requestActiveTab === "body" ? 0 : -1}
+                  className={`tab-button ${requestActiveTab === "body" ? "active" : ""}`}
+                  onClick={() => setRequestActiveTab("body")}
                   disabled={loading}
                 >
-                  Form
+                  Request Body
                 </button>
-                <button
-                  type="button"
-                  className={bodyMode === "raw" ? "active" : ""}
-                  onClick={() => setBodyMode("raw")}
-                  disabled={loading}
-                >
-                  Raw JSON
-                </button>
-              </div>
+              )}
+            </div>
 
-              {bodyMode === "form" ? (
+            <div className="tab-content">
+              <div
+                role="tabpanel"
+                id="request-query-panel"
+                aria-labelledby="request-query-tab"
+                hidden={requestActiveTab !== "query"}
+                className="tab-panel"
+              >
                 <div className="key-value-list">
-                  {bodyParams.map((param, index) => (
+                  {queryParams.map((param, index) => (
                     <div key={index} className="key-value-row">
                       <input
                         type="text"
                         placeholder="Key"
                         value={param.key}
-                        onChange={(e) => updateBodyParam(index, "key", e.target.value)}
+                        onChange={(e) => updateQueryParam(index, "key", e.target.value)}
                         disabled={loading}
                       />
                       <input
                         type="text"
-                        placeholder="Value (can be JSON)"
+                        placeholder="Value"
                         value={param.value}
-                        onChange={(e) => updateBodyParam(index, "value", e.target.value)}
+                        onChange={(e) => updateQueryParam(index, "value", e.target.value)}
                         disabled={loading}
                       />
                       <button
                         type="button"
-                        onClick={() => removeBodyParam(index)}
+                        onClick={() => removeQueryParam(index)}
                         disabled={loading}
                         className="remove-btn"
                       >
@@ -392,48 +381,161 @@ function App() {
                   ))}
                   <button
                     type="button"
-                    onClick={addBodyParam}
+                    onClick={addQueryParam}
                     disabled={loading}
                     className="add-btn"
                   >
-                    + Add Field
+                    + Add Parameter
                   </button>
                 </div>
-              ) : (
-                <div className="raw-json-editor">
-                  <textarea
-                    className="json-textarea"
-                    value={rawJsonBody}
-                    onChange={(e) => {
-                      setRawJsonBody(e.target.value);
-                      // Clear error when user starts typing
-                      if (jsonError) setJsonError(null);
-                    }}
-                    placeholder='{\n  "key": "value",\n  "nested": {\n    "example": true\n  }\n}'
-                    disabled={loading}
-                    spellCheck={false}
-                  />
-                  {jsonError && <div className="json-error">{jsonError}</div>}
+              </div>
+
+              <div
+                role="tabpanel"
+                id="request-headers-panel"
+                aria-labelledby="request-headers-tab"
+                hidden={requestActiveTab !== "headers"}
+                className="tab-panel"
+              >
+                <div className="key-value-list">
+                  {headers.map((header, index) => (
+                    <div key={index} className="key-value-row">
+                      <input
+                        type="text"
+                        placeholder="Key (e.g., Authorization)"
+                        value={header.key}
+                        onChange={(e) => updateHeader(index, "key", e.target.value)}
+                        disabled={loading}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Value"
+                        value={header.value}
+                        onChange={(e) => updateHeader(index, "value", e.target.value)}
+                        disabled={loading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeHeader(index)}
+                        disabled={loading}
+                        className="remove-btn"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                   <button
                     type="button"
-                    className="format-btn"
-                    onClick={() => {
-                      try {
-                        const parsed = JSON.parse(rawJsonBody);
-                        setRawJsonBody(JSON.stringify(parsed, null, 2));
-                        setJsonError(null);
-                      } catch (e) {
-                        setJsonError("Invalid JSON: " + (e as Error).message);
-                      }
-                    }}
-                    disabled={loading || !rawJsonBody.trim()}
+                    onClick={addHeader}
+                    disabled={loading}
+                    className="add-btn"
                   >
-                    Format JSON
+                    + Add Header
                   </button>
                 </div>
+              </div>
+
+              {(method === "POST" || method === "PUT" || method === "PATCH") && (
+                <div
+                  role="tabpanel"
+                  id="request-body-panel"
+                  aria-labelledby="request-body-tab"
+                  hidden={requestActiveTab !== "body"}
+                  className="tab-panel"
+                >
+                  <div className="body-mode-toggle">
+                    <button
+                      type="button"
+                      className={bodyMode === "form" ? "active" : ""}
+                      onClick={() => setBodyMode("form")}
+                      disabled={loading}
+                    >
+                      Form
+                    </button>
+                    <button
+                      type="button"
+                      className={bodyMode === "raw" ? "active" : ""}
+                      onClick={() => setBodyMode("raw")}
+                      disabled={loading}
+                    >
+                      Raw JSON
+                    </button>
+                  </div>
+
+                  {bodyMode === "form" ? (
+                    <div className="key-value-list">
+                      {bodyParams.map((param, index) => (
+                        <div key={index} className="key-value-row">
+                          <input
+                            type="text"
+                            placeholder="Key"
+                            value={param.key}
+                            onChange={(e) => updateBodyParam(index, "key", e.target.value)}
+                            disabled={loading}
+                          />
+                          <input
+                            type="text"
+                            placeholder="Value (can be JSON)"
+                            value={param.value}
+                            onChange={(e) => updateBodyParam(index, "value", e.target.value)}
+                            disabled={loading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeBodyParam(index)}
+                            disabled={loading}
+                            className="remove-btn"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addBodyParam}
+                        disabled={loading}
+                        className="add-btn"
+                      >
+                        + Add Field
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="raw-json-editor">
+                      <textarea
+                        className="json-textarea"
+                        value={rawJsonBody}
+                        onChange={(e) => {
+                          setRawJsonBody(e.target.value);
+                          // Clear error when user starts typing
+                          if (jsonError) setJsonError(null);
+                        }}
+                        placeholder='{\n  "key": "value",\n  "nested": {\n    "example": true\n  }\n}'
+                        disabled={loading}
+                        spellCheck={false}
+                      />
+                      {jsonError && <div className="json-error">{jsonError}</div>}
+                      <button
+                        type="button"
+                        className="format-btn"
+                        onClick={() => {
+                          try {
+                            const parsed = JSON.parse(rawJsonBody);
+                            setRawJsonBody(JSON.stringify(parsed, null, 2));
+                            setJsonError(null);
+                          } catch (e) {
+                            setJsonError("Invalid JSON: " + (e as Error).message);
+                          }
+                        }}
+                        disabled={loading || !rawJsonBody.trim()}
+                      >
+                        Format JSON
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
-            </details>
-          )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -444,7 +546,7 @@ function App() {
       )}
 
       {response && requestDetails && (
-        <div className="response-section">
+        <div className="section-container response-section">
           <div className="response-summary">
             <span className={`status-badge status-${Math.floor(response.status_code / 100)}xx`}>
               {response.status_code}
@@ -452,82 +554,138 @@ function App() {
             <span className="timing">{response.duration_ms} ms</span>
           </div>
 
-          <div className="details-tabs">
-            <details open>
-              <summary>Response Body</summary>
-              <div className="json-viewer-container">
-                <JsonView
-                  value={response.body}
-                  collapsed={2}
-                  displayDataTypes={false}
-                  style={isDarkMode ? darkTheme : undefined}
-                />
-              </div>
-            </details>
+          <div className="tab-container">
+            <div className="tab-bar" role="tablist" aria-label="Response information" onKeyDown={handleResponseTabKeyDown}>
+              <button
+                role="tab"
+                aria-selected={responseActiveTab === "body"}
+                aria-controls="response-body-panel"
+                id="response-body-tab"
+                tabIndex={responseActiveTab === "body" ? 0 : -1}
+                className={`tab-button ${responseActiveTab === "body" ? "active" : ""}`}
+                onClick={() => setResponseActiveTab("body")}
+              >
+                Response Body
+              </button>
 
-            <details>
-              <summary>Response Headers ({Object.keys(response.headers).length})</summary>
-              <div className="headers-display">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Header</th>
-                      <th>Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {Object.entries(response.headers).map(([key, value]) => (
-                      <tr key={key}>
-                        <td className="header-key">{key}</td>
-                        <td className="header-value">{value}</td>
+              <button
+                role="tab"
+                aria-selected={responseActiveTab === "headers"}
+                aria-controls="response-headers-panel"
+                id="response-headers-tab"
+                tabIndex={responseActiveTab === "headers" ? 0 : -1}
+                className={`tab-button ${responseActiveTab === "headers" ? "active" : ""}`}
+                onClick={() => setResponseActiveTab("headers")}
+              >
+                Response Headers
+                <span className="tab-badge">{Object.keys(response.headers).length}</span>
+              </button>
+
+              <button
+                role="tab"
+                aria-selected={responseActiveTab === "details"}
+                aria-controls="request-details-panel"
+                id="request-details-tab"
+                tabIndex={responseActiveTab === "details" ? 0 : -1}
+                className={`tab-button ${responseActiveTab === "details" ? "active" : ""}`}
+                onClick={() => setResponseActiveTab("details")}
+              >
+                Request Details
+              </button>
+            </div>
+
+            <div className="tab-content">
+              <div
+                role="tabpanel"
+                id="response-body-panel"
+                aria-labelledby="response-body-tab"
+                hidden={responseActiveTab !== "body"}
+                className="tab-panel"
+              >
+                <div className="json-viewer-container">
+                  <JsonView
+                    value={response.body}
+                    collapsed={2}
+                    displayDataTypes={false}
+                    style={isDarkMode ? darkTheme : undefined}
+                  />
+                </div>
+              </div>
+
+              <div
+                role="tabpanel"
+                id="response-headers-panel"
+                aria-labelledby="response-headers-tab"
+                hidden={responseActiveTab !== "headers"}
+                className="tab-panel"
+              >
+                <div className="headers-display">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Header</th>
+                        <th>Value</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {Object.entries(response.headers).map(([key, value]) => (
+                        <tr key={key}>
+                          <td className="header-key">{key}</td>
+                          <td className="header-value">{value}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </details>
 
-            <details>
-              <summary>Request Details</summary>
-              <div className="request-display">
-                <div className="request-line">
-                  <strong>{requestDetails.method}</strong> {requestDetails.url}
-                  {requestDetails.queryParams.length > 0 && (
+              <div
+                role="tabpanel"
+                id="request-details-panel"
+                aria-labelledby="request-details-tab"
+                hidden={responseActiveTab !== "details"}
+                className="tab-panel"
+              >
+                <div className="request-display">
+                  <div className="request-line">
+                    <strong>{requestDetails.method}</strong> {requestDetails.url}
+                    {requestDetails.queryParams.length > 0 && (
+                      <>
+                        ?
+                        {requestDetails.queryParams
+                          .map(([k, v]) => `${k}=${v}`)
+                          .join("&")}
+                      </>
+                    )}
+                  </div>
+
+                  {Object.keys(requestDetails.headers).length > 0 && (
                     <>
-                      ?
-                      {requestDetails.queryParams
-                        .map(([k, v]) => `${k}=${v}`)
-                        .join("&")}
+                      <h4>Request Headers</h4>
+                      <table>
+                        <tbody>
+                          {Object.entries(requestDetails.headers).map(([key, value]) => (
+                            <tr key={key}>
+                              <td className="header-key">{key}</td>
+                              <td className="header-value">{value}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>
+                  )}
+
+                  {requestDetails.body && (
+                    <>
+                      <h4>Request Body</h4>
+                      <pre className="body-preview">
+                        {JSON.stringify(requestDetails.body, null, 2)}
+                      </pre>
                     </>
                   )}
                 </div>
-
-                {Object.keys(requestDetails.headers).length > 0 && (
-                  <>
-                    <h4>Request Headers</h4>
-                    <table>
-                      <tbody>
-                        {Object.entries(requestDetails.headers).map(([key, value]) => (
-                          <tr key={key}>
-                            <td className="header-key">{key}</td>
-                            <td className="header-value">{value}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </>
-                )}
-
-                {requestDetails.body && (
-                  <>
-                    <h4>Request Body</h4>
-                    <pre className="body-preview">
-                      {JSON.stringify(requestDetails.body, null, 2)}
-                    </pre>
-                  </>
-                )}
               </div>
-            </details>
+            </div>
           </div>
         </div>
       )}
