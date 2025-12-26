@@ -168,14 +168,11 @@ jobs:
       - name: Build frontend
         run: npm run build
 
-      - name: Install Tauri CLI
-        run: npm install -g @tauri-apps/cli@^2
-
       - name: Initialize Android project
-        run: cd src-tauri && cargo tauri android init --skip-targets-install
+        run: npm run android:init || echo "Android project may already be initialized"
 
       - name: Build Android APK
-        run: cd src-tauri && cargo tauri android build --apk
+        run: npm run android:build -- --apk
 
       - name: Upload APK to Release
         uses: softprops/action-gh-release@v1
