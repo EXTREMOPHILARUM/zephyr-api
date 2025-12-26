@@ -179,6 +179,9 @@ jobs:
       - name: Initialize Android project
         run: npm run android:init || echo "Android project may already be initialized"
 
+      - name: Copy Android icons
+        run: cp -r src-tauri/icons/android/* src-tauri/gen/android/app/src/main/res/
+
       - name: Build Android APK
         run: npm run android:build -- --apk true
 
