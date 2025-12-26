@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-26
+
+### Added
+- **Request History** (#6): Automatic request history tracking with persistent storage
+  - Stores last 100 API requests in localStorage
+  - Collapsible sidebar UI (280px desktop, full-width mobile)
+  - Toggle button in header with request count badge
+  - Search/filter functionality (by URL or method)
+  - Click-to-load: Restore any previous request to builder
+  - Visual indicators:
+    - Color-coded method badges (GET=blue, POST=green, PUT=orange, DELETE=red, PATCH=purple)
+    - Status indicators (✓ green for success, ✗ red for error)
+    - Relative timestamps ("2 min ago", "Today 3:45 PM")
+    - Response duration and status code display
+  - Clear all history button with confirmation dialog
+  - Complete request snapshot (method, URL, headers, query params, body, bodyMode)
+  - Response metadata (status code, duration, success flag)
+  - Full dark mode support for all history UI elements
+  - Mobile responsive with overlay design
+- **Response Download/Export** (#5): Save API responses to files
+  - Save file dialog for choosing download location
+  - Multiple export formats:
+    - JSON (body only or with full response metadata)
+    - Text (body only or with headers/metadata)
+  - Smart filename generation from URL and timestamp
+  - File type filters in save dialog
+  - Tauri dialog and filesystem plugins integration
+  - Full dark mode support for download menu
+
+### Fixed
+- Download functionality now uses native save dialog instead of browser auto-download
+
+### Technical Details
+- History storage: localStorage with 100-entry FIFO queue
+- File operations: Tauri dialog and fs plugins
+- New dependencies: @tauri-apps/plugin-dialog, @tauri-apps/plugin-fs
+- Permissions configured: dialog:allow-save, fs:allow-write-text-file
+
 ## [0.2.0] - 2025-12-26
 
 ### Added
@@ -80,6 +118,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Vite for fast development and builds
 - @uiw/react-json-view for JSON visualization
 
-[Unreleased]: https://github.com/EXTREMOPHILARUM/zephyr-api/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/EXTREMOPHILARUM/zephyr-api/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/EXTREMOPHILARUM/zephyr-api/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/EXTREMOPHILARUM/zephyr-api/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/EXTREMOPHILARUM/zephyr-api/releases/tag/v0.1.0
