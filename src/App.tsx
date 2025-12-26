@@ -24,6 +24,46 @@ type RequestDetails = {
   body: any;
 };
 
+interface HistoryEntry {
+  id: string;
+  timestamp: number;
+  request: {
+    method: string;
+    url: string;
+    baseUrl: string;
+    headers: Array<{ key: string; value: string }>;
+    queryParams: Array<{ key: string; value: string }>;
+    bodyMode: 'form' | 'raw';
+    bodyParams: Array<{ key: string; value: string }>;
+    rawJsonBody: string;
+  };
+  response: {
+    status: number;
+    duration: number;
+    success: boolean;
+  };
+}
+
+// Load history from localStorage
+const loadHistory = (): HistoryEntry[] => {
+  try {
+    const stored = localStorage.getItem('zephyr_request_history');
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error('Failed to load history:', error);
+    return [];
+  }
+};
+
+// Save history to localStorage
+const saveHistory = (entries: HistoryEntry[]) => {
+  try {
+    localStorage.setItem('zephyr_request_history', JSON.stringify(entries));
+  } catch (error) {
+    console.error('Failed to save history:', error);
+  }
+};
+
 function App() {
   const [apiUrl, setApiUrl] = useState<string>("");
   const [method, setMethod] = useState<string>("GET");
@@ -50,6 +90,8 @@ function App() {
   const [requestActiveTab, setRequestActiveTab] = useState<string>("query");
   const [responseActiveTab, setResponseActiveTab] = useState<string>("body");
   const [showDownloadMenu, setShowDownloadMenu] = useState<boolean>(false);
+  const [history, setHistory] = useState<HistoryEntry[]>(loadHistory());
+  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState<boolean>(false);
   const downloadMenuRef = useRef<HTMLDivElement>(null);
 
   // Close download menu when clicking outside
@@ -280,6 +322,159 @@ function App() {
     setShowDownloadMenu(false);
   };
 
+  // Load history entry into request builder
+  const loadHistoryEntry = (entry: HistoryEntry) => {
+    // Restore all request state
+    setMethod(entry.request.method);
+    setApiUrl(entry.request.url);
+    setQueryParams(entry.request.queryParams.length > 0
+      ? entry.request.queryParams
+      : [{ key: "", value: "" }]);
+    setHeaders(entry.request.headers.length > 0
+      ? entry.request.headers
+      : [{ key: "", value: "" }]);
+    setBodyMode(entry.request.bodyMode);
+    setBodyParams(entry.request.bodyParams.length > 0
+      ? entry.request.bodyParams
+      : [{ key: "", value: "" }]);
+    setRawJsonBody(entry.request.rawJsonBody);
+
+    // Clear response state
+    setResponse(null);
+    setRequestDetails(null);
+    setError(null);
+
+    // Close sidebar (especially important on mobile)
+    setIsHistorySidebarOpen(false);
+  };
+
+  // Clear all history
+  const clearHistory = () => {
+    if (window.confirm("Clear all request history?")) {
+      setHistory([]);
+      localStorage.removeItem('zephyr_request_history');
+    }
+  };
+
+  // Format timestamp for display
+  const formatTimestamp = (timestamp: number): string => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (seconds < 60) return "Just now";
+    if (minutes < 60) return `${minutes} min ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    if (days < 7) return `${days} day${days > 1 ? 's' : ''} ago`;
+
+    const date = new Date(timestamp);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      return `Today ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+    }
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  // History Sidebar Component
+  const HistorySidebar = ({
+    history,
+    isOpen,
+    onClose,
+    onSelectEntry,
+    onClearHistory
+  }: {
+    history: HistoryEntry[];
+    isOpen: boolean;
+    onClose: () => void;
+    onSelectEntry: (entry: HistoryEntry) => void;
+    onClearHistory: () => void;
+  }) => {
+    const [searchQuery, setSearchQuery] = useState("");
+
+    const filteredHistory = history.filter(entry =>
+      entry.request.baseUrl.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      entry.request.method.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const getMethodColor = (method: string): string => {
+      const colors: Record<string, string> = {
+        GET: "#3b82f6",
+        POST: "#22c55e",
+        PUT: "#f59e0b",
+        DELETE: "#ef4444",
+        PATCH: "#8b5cf6",
+        HEAD: "#6366f1",
+        OPTIONS: "#64748b",
+      };
+      return colors[method] || "#64748b";
+    };
+
+    return (
+      <div className={`history-sidebar ${isOpen ? 'open' : ''}`}>
+        <div className="history-header">
+          <h2>Request History</h2>
+          <button className="close-btn" onClick={onClose}>✕</button>
+        </div>
+
+        <div className="history-search">
+          <input
+            type="text"
+            placeholder="Search history..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+
+        <div className="history-actions">
+          <button
+            className="clear-history-btn"
+            onClick={onClearHistory}
+            disabled={history.length === 0}
+          >
+            Clear All ({history.length})
+          </button>
+        </div>
+
+        <div className="history-list">
+          {filteredHistory.length === 0 ? (
+            <div className="empty-history">
+              {searchQuery ? "No matching requests" : "No request history yet"}
+            </div>
+          ) : (
+            filteredHistory.map((entry) => (
+              <div
+                key={entry.id}
+                className="history-entry"
+                onClick={() => onSelectEntry(entry)}
+              >
+                <div className="history-entry-header">
+                  <span
+                    className="method-badge"
+                    style={{ backgroundColor: getMethodColor(entry.request.method) }}
+                  >
+                    {entry.request.method}
+                  </span>
+                  <span className={`status-indicator ${entry.response.success ? 'success' : 'error'}`}>
+                    {entry.response.success ? '✓' : '✗'}
+                  </span>
+                </div>
+                <div className="history-entry-url">{entry.request.baseUrl}</div>
+                <div className="history-entry-meta">
+                  <span className="timestamp">{formatTimestamp(entry.timestamp)}</span>
+                  <span className="duration">{entry.response.duration}ms</span>
+                  <span className="status-code">{entry.response.status}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    );
+  };
+
   async function fetchJson() {
     if (!apiUrl.trim()) {
       setError("Please enter a URL");
@@ -355,6 +550,32 @@ function App() {
         body: body,
       });
       setResponse(data);
+
+      // Capture history
+      const historyEntry: HistoryEntry = {
+        id: Date.now().toString() + Math.random().toString(36).substring(2, 9),
+        timestamp: Date.now(),
+        request: {
+          method,
+          url: apiUrl,
+          baseUrl: apiUrl.split('?')[0],
+          headers: headers.filter(h => h.key.trim() !== ''),
+          queryParams: queryParams.filter(p => p.key.trim() !== ''),
+          bodyMode,
+          bodyParams: bodyParams.filter(p => p.key.trim() !== ''),
+          rawJsonBody,
+        },
+        response: {
+          status: data.status_code,
+          duration: data.duration_ms,
+          success: data.status_code < 400,
+        },
+      };
+
+      // Add to history (prepend + trim to 100 entries)
+      const updatedHistory = [historyEntry, ...history].slice(0, 100);
+      setHistory(updatedHistory);
+      saveHistory(updatedHistory);
     } catch (err) {
       setError(err as string);
     } finally {
@@ -364,7 +585,27 @@ function App() {
 
   return (
     <main className="container">
+      {isHistorySidebarOpen && (
+        <div className="history-overlay" onClick={() => setIsHistorySidebarOpen(false)} />
+      )}
+      <HistorySidebar
+        history={history}
+        isOpen={isHistorySidebarOpen}
+        onClose={() => setIsHistorySidebarOpen(false)}
+        onSelectEntry={loadHistoryEntry}
+        onClearHistory={clearHistory}
+      />
+
       <div className="header">
+        <button
+          className="history-toggle"
+          onClick={() => setIsHistorySidebarOpen(!isHistorySidebarOpen)}
+          title="Toggle request history"
+          aria-label="Toggle request history"
+        >
+          <span className="history-icon">🕐</span>
+          <span className="history-count">{history.length}</span>
+        </button>
         <div className="header-content">
           <h1>Zephyr API</h1>
           <p className="subtitle">A breath of fresh air for API testing</p>
