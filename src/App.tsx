@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { save } from "@tauri-apps/plugin-dialog";
+import { writeTextFile } from "@tauri-apps/plugin-fs";
 import JsonView from "@uiw/react-json-view";
 import { darkTheme } from "@uiw/react-json-view/dark";
 import "./App.css";
@@ -208,7 +210,7 @@ function App() {
   };
 
   // Download response as JSON
-  const downloadAsJson = (includeHeaders: boolean = false) => {
+  const downloadAsJson = async (includeHeaders: boolean = false) => {
     if (!response) return;
 
     const data = includeHeaders ? {
@@ -219,20 +221,29 @@ function App() {
     } : response.body;
 
     const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = generateFilename("json");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+
+    try {
+      const filePath = await save({
+        defaultPath: generateFilename("json"),
+        filters: [{
+          name: "JSON",
+          extensions: ["json"]
+        }]
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, json);
+      }
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      setError("Failed to save file: " + error);
+    }
+
     setShowDownloadMenu(false);
   };
 
   // Download response as text
-  const downloadAsText = (includeHeaders: boolean = false) => {
+  const downloadAsText = async (includeHeaders: boolean = false) => {
     if (!response) return;
 
     let content = "";
@@ -249,15 +260,23 @@ function App() {
 
     content += JSON.stringify(response.body, null, 2);
 
-    const blob = new Blob([content], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = generateFilename("txt");
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const filePath = await save({
+        defaultPath: generateFilename("txt"),
+        filters: [{
+          name: "Text",
+          extensions: ["txt"]
+        }]
+      });
+
+      if (filePath) {
+        await writeTextFile(filePath, content);
+      }
+    } catch (error) {
+      console.error("Failed to save file:", error);
+      setError("Failed to save file: " + error);
+    }
+
     setShowDownloadMenu(false);
   };
 
