@@ -299,7 +299,7 @@ function App() {
           </button>
         </div>
 
-        <div className="params-section">
+        <div className="section-container params-section">
           <div className="tab-container">
             <div className="tab-bar" role="tablist" aria-label="Request options" onKeyDown={handleRequestTabKeyDown}>
               <button
@@ -546,7 +546,7 @@ function App() {
       )}
 
       {response && requestDetails && (
-        <div className="response-section">
+        <div className="section-container response-section">
           <div className="response-summary">
             <span className={`status-badge status-${Math.floor(response.status_code / 100)}xx`}>
               {response.status_code}
