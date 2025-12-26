@@ -297,6 +297,11 @@ summary:hover {
   width: 100%;
   max-width: 1200px;
   margin: 20px auto;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .response-summary {
@@ -304,11 +309,9 @@ summary:hover {
   gap: 15px;
   align-items: center;
   margin-bottom: 15px;
-  padding: 15px;
-  background-color: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
 }
 
 .status-badge {
@@ -620,11 +623,12 @@ summary:hover {
   color: #4de8ff;
 }
 
-[data-theme="dark"] .response-summary {
-  background-color: #1a1a1a;
+[data-theme="dark"] .response-section {
+  background-color: #0f0f0f98;
+  border-color: #333;
 }
 
-[data-theme="dark"] .details-tabs {
+[data-theme="dark"] .response-summary {
   background-color: #1a1a1a;
 }
 
